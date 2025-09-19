@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compounding Growth Calculator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .container {
+      max-width: 1000px;
+      margin-top: 50px;
+      margin-bottom: 50px;
+    }
+    h1 {
+      font-weight: 700;
+      color: #212529;
+      margin-bottom: 25px;
+    }
+    .card {
+      border: none;
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    .highlight-card {
+      background: linear-gradient(135deg, #0d6efd, #198754);
+      color: white;
+      text-align: center;
+      border-radius: 1rem;
+      padding: 35px 25px;
+      margin-bottom: 30px;
+      animation: fadeIn 1.2s ease-in-out;
+    }
+    .highlight-card h2 {
+      font-size: 2rem;
+      margin-bottom: 15px;
+    }
+    .highlight-card p {
+      font-size: 1.2rem;
+      font-style: italic;
+      margin-bottom: 15px;
+    }
+    .badge {
+      font-size: 1rem;
+      padding: 10px 16px;
+      border-radius: 20px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .table-container {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    table {
+      border: 1px solid #dee2e6;
+    }
+    thead th {
+      background-color: #0d6efd;
+      color: white;
+      position: sticky;
+      top: 0;
+      font-size: 1rem;
+    }
+    tbody tr:hover {
+      background-color: #f1f3f5;
+    }
+    td, th {
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center"><i class="bi bi-graph-up"></i> Compounding Growth Calculator</h1>
+
+    <!-- Input Section -->
+    <div class="card p-4">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <label for="initialCapital" class="form-label"><i class="bi bi-cash-stack"></i> Starting Capital (₹)</label>
+          <input type="number" class="form-control" id="initialCapital" value="2600000" required>
+        </div>
+        <div class="col-md-4">
+          <label for="dailyRoi" class="form-label"><i class="bi bi-percent"></i> Daily ROI (%)</label>
+          <input type="number" class="form-control" id="dailyRoi" value="5" step="0.1" required>
+        </div>
+        <div class="col-md-4">
+          <label for="tradingDays" class="form-label"><i class="bi bi-calendar-check"></i> Number of Days</label>
+          <input type="number" class="form-control" id="tradingDays" value="100" required>
+        </div>
+      </div>
+      <div class="mt-4 text-center">
+        <button class="btn btn-primary btn-lg" onclick="calculateGrowth()">
+          <i class="bi bi-bar-chart-line"></i> Generate Report
+        </button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="d-none">
+      <div class="highlight-card">
+        <h2 id="finalValue"></h2>
+        <p id="finalValueWords"></p>
+        <span id="finalTag" class="badge"></span>
+      </div>
+
+      <div class="card p-4">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <p><i class="bi bi-cash-stack"></i> <strong>Starting Capital:</strong> <span id="summaryCapital"></span></p>
+          </div>
+          <div class="col-md-6">
+            <p><i class="bi bi-percent"></i> <strong>Daily ROI:</strong> <span id="summaryRoi"></span></p>
+          </div>
+          <div class="col-md-6">
+            <p><i class="bi bi-calendar-check"></i> <strong>Number of Days:</strong> <span id="summaryDays"></span></p>
+          </div>
+          <div class="col-md-6">
+            <p><i class="bi bi-wallet2"></i> <strong>Final Balance:</strong> <span id="finalBalance" class="fw-bold fs-4 text-success"></span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container mt-4">
+        <table class="table table-bordered table-striped table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Starting Balance</th>
+              <th>Daily Profit</th>
+              <th>Ending Balance</th>
+            </tr>
+          </thead>
+          <tbody id="resultsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Short Indian system formatter
+    function shortIndianNumber(num) {
+      if (num >= 10000000) return (num / 10000000).toFixed(2) + " Crore Rupees";
+      if (num >= 100000) return (num / 100000).toFixed(2) + " Lakh Rupees";
+      if (num >= 1000) return (num / 1000).toFixed(2) + " Thousand Rupees";
+      return num.toFixed(2) + " Rupees";
+    }
+
+    // Badge for quick recognition
+    function getTag(num) {
+      if (num >= 10000000) return { text: "Crore Level Wealth", color: "bg-success" };
+      if (num >= 100000) return { text: "Lakh Level Growth", color: "bg-primary" };
+      if (num >= 1000) return { text: "Thousands Saved", color: "bg-purple bg-gradient" };
+      return { text: "Small Amount", color: "bg-secondary" };
+    }
+
+    function calculateGrowth() {
+      const initialCapital = parseFloat(document.getElementById('initialCapital').value);
+      const dailyRoi = parseFloat(document.getElementById('dailyRoi').value) / 100;
+      const tradingDays = parseInt(document.getElementById('tradingDays').value);
+
+      if (isNaN(initialCapital) || isNaN(dailyRoi) || isNaN(tradingDays) || tradingDays <= 0) {
+        alert("Please enter valid numbers for all fields.");
+        return;
+      }
+
+      let currentBalance = initialCapital;
+      let tableRows = '';
+
+      for (let day = 1; day <= tradingDays; day++) {
+        const profit = currentBalance * dailyRoi;
+        const endingBalance = currentBalance + profit;
+
+        tableRows += `
+          <tr>
+            <td>${day}</td>
+            <td>₹${currentBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+            <td>₹${profit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+            <td>₹${endingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+          </tr>
+        `;
+
+        currentBalance = endingBalance;
+      }
+
+      // Summary
+      document.getElementById('summaryCapital').innerText = `₹${initialCapital.toLocaleString('en-IN')}`;
+      document.getElementById('summaryRoi').innerText = `${(dailyRoi * 100).toFixed(2)}%`;
+      document.getElementById('summaryDays').innerText = tradingDays;
+      document.getElementById('finalBalance').innerText = `₹${currentBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+      // Highlight
+      document.getElementById('finalValue').innerText = `Final Value After ${tradingDays} Days`;
+      document.getElementById('finalValueWords').innerText = shortIndianNumber(currentBalance);
+
+      const tag = getTag(currentBalance);
+      document.getElementById('finalTag').innerText = tag.text;
+      document.getElementById('finalTag').className = `badge ${tag.color}`;
+
+      // Table
+      document.getElementById('resultsTableBody').innerHTML = tableRows;
+      document.getElementById('results').classList.remove('d-none');
+    }
+  </script>
+</body>
+</html>
